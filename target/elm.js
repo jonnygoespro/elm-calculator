@@ -5580,9 +5580,11 @@ var $author$project$Main$subscriptions = function (_v0) {
 			A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string)));
 };
 var $author$project$Main$ClearButtonClicked = {$: 'ClearButtonClicked'};
+var $author$project$Main$DeleteButtonPressed = {$: 'DeleteButtonPressed'};
 var $author$project$Main$DivideButtonClicked = {$: 'DivideButtonClicked'};
 var $author$project$Main$EqualSignButtonClicked = {$: 'EqualSignButtonClicked'};
 var $author$project$Main$MinusButtonClicked = {$: 'MinusButtonClicked'};
+var $author$project$Main$ModuloButtonPressed = {$: 'ModuloButtonPressed'};
 var $author$project$Main$MultiplyButtonClicked = {$: 'MultiplyButtonClicked'};
 var $author$project$Main$NumberButtonClicked = function (a) {
 	return {$: 'NumberButtonClicked', a: a};
@@ -5594,6 +5596,7 @@ var $elm$core$Basics$negate = function (n) {
 var $author$project$Main$checkOverflow = function (number) {
 	return ((_Utils_cmp(number, -2147483648) < 0) || (number > 2147483647)) ? $elm$core$Result$Err('Overflow occured') : $elm$core$Result$Ok(number);
 };
+var $elm$core$Basics$modBy = _Basics_modBy;
 var $author$project$Main$calculate = F3(
 	function (firstNumber, operator, secondNumber) {
 		switch (operator) {
@@ -5605,6 +5608,9 @@ var $author$project$Main$calculate = F3(
 				return $author$project$Main$checkOverflow(firstNumber * secondNumber);
 			case '/':
 				return (!secondNumber) ? $elm$core$Result$Err('Cannot Divide by zero') : $author$project$Main$checkOverflow((firstNumber / secondNumber) | 0);
+			case '%':
+				return $author$project$Main$checkOverflow(
+					A2($elm$core$Basics$modBy, secondNumber, firstNumber));
 			default:
 				return $elm$core$Result$Err('Invalid Operation');
 		}
@@ -5696,10 +5702,28 @@ var $author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						A2($author$project$Main$handleOperator, model, '/'),
 						$elm$core$Platform$Cmd$none);
-				case 'EqualSignButtonClicked':
+				case 'ModuloButtonPressed':
+					return _Utils_Tuple2(
+						A2($author$project$Main$handleOperator, model, '%'),
+						$elm$core$Platform$Cmd$none);
+				case 'DeleteButtonPressed':
 					var _v2 = model.output;
 					if (_v2.$ === 'Ok') {
 						var currentOutput = _v2.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									output: $elm$core$Result$Ok((currentOutput / 10) | 0)
+								}),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					}
+				case 'EqualSignButtonClicked':
+					var _v3 = model.output;
+					if (_v3.$ === 'Ok') {
+						var currentOutput = _v3.a;
 						var result = A3($author$project$Main$calculate, model.firstNumber, model.operator, currentOutput);
 						return _Utils_Tuple2(
 							_Utils_update(
@@ -5800,6 +5824,12 @@ var $author$project$Main$update = F2(
 							msg = $temp$msg;
 							model = $temp$model;
 							continue update;
+						case '%':
+							var $temp$msg = $author$project$Main$ModuloButtonPressed,
+								$temp$model = model;
+							msg = $temp$msg;
+							model = $temp$model;
+							continue update;
 						case 'Enter':
 							var $temp$msg = $author$project$Main$EqualSignButtonClicked,
 								$temp$model = model;
@@ -5808,6 +5838,12 @@ var $author$project$Main$update = F2(
 							continue update;
 						case 'c':
 							var $temp$msg = $author$project$Main$ClearButtonClicked,
+								$temp$model = model;
+							msg = $temp$msg;
+							model = $temp$model;
+							continue update;
+						case 'Backspace':
+							var $temp$msg = $author$project$Main$DeleteButtonPressed,
 								$temp$model = model;
 							msg = $temp$msg;
 							model = $temp$model;
@@ -5909,6 +5945,47 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$button,
 						_List_fromArray(
 							[
+								$elm$html$Html$Events$onClick($author$project$Main$ClearButtonClicked)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('c')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$ModuloButtonPressed)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('%')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Events$onClick($author$project$Main$DeleteButtonPressed)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('del')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('actionButton'),
+								$elm$html$Html$Events$onClick($author$project$Main$PlusButtonClicked)
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('+')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_fromArray(
+							[
 								$elm$html$Html$Events$onClick(
 								$author$project$Main$NumberButtonClicked(7))
 							]),
@@ -5943,11 +6020,11 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$class('actionButton'),
-								$elm$html$Html$Events$onClick($author$project$Main$PlusButtonClicked)
+								$elm$html$Html$Events$onClick($author$project$Main$MinusButtonClicked)
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('+')
+								$elm$html$Html$text('-')
 							])),
 						A2(
 						$elm$html$Html$button,
@@ -5987,11 +6064,11 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$class('actionButton'),
-								$elm$html$Html$Events$onClick($author$project$Main$MinusButtonClicked)
+								$elm$html$Html$Events$onClick($author$project$Main$MultiplyButtonClicked)
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('-')
+								$elm$html$Html$text('*')
 							])),
 						A2(
 						$elm$html$Html$button,
@@ -6031,32 +6108,30 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$Attributes$class('actionButton'),
-								$elm$html$Html$Events$onClick($author$project$Main$MultiplyButtonClicked)
+								$elm$html$Html$Events$onClick($author$project$Main$DivideButtonClicked)
 							]),
 						_List_fromArray(
 							[
-								$elm$html$Html$text('*')
+								$elm$html$Html$text('/')
 							])),
 						A2(
 						$elm$html$Html$button,
 						_List_fromArray(
 							[
-								$elm$html$Html$Events$onClick($author$project$Main$ClearButtonClicked)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('c')
-							])),
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
+								$elm$html$Html$Attributes$class('button0'),
 								$elm$html$Html$Events$onClick(
 								$author$project$Main$NumberButtonClicked(0))
 							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text('0')
+							])),
+						A2(
+						$elm$html$Html$button,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(',')
 							])),
 						A2(
 						$elm$html$Html$button,
@@ -6068,17 +6143,6 @@ var $author$project$Main$view = function (model) {
 						_List_fromArray(
 							[
 								$elm$html$Html$text('=')
-							])),
-						A2(
-						$elm$html$Html$button,
-						_List_fromArray(
-							[
-								$elm$html$Html$Attributes$class('actionButton'),
-								$elm$html$Html$Events$onClick($author$project$Main$DivideButtonClicked)
-							]),
-						_List_fromArray(
-							[
-								$elm$html$Html$text('/')
 							]))
 					]))
 			]));

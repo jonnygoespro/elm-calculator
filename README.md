@@ -6,12 +6,6 @@ This project is an **integer calculator** built using **Elm**. It allows users t
 
 This project was developed as part of the **Applied Programming Paradigms** course during the **1st semester of the Master's degree program** at **FH Salzburg**.
 
-## Features
-- Perform basic arithmetic operations: addition, subtraction, multiplication, and division
-- Input numbers using on-screen buttons or keyboard (digits `0-9` and the `Enter` key)
-- Overflow checks to prevent calculations that exceed valid integer ranges
-- Clear functionality to reset the calculator
-
 ## Build and Run Instructions
 
 ### Requirements

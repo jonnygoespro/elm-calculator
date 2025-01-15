@@ -49,6 +49,8 @@ type Msg
     | MultiplyButtonClicked
     | DivideButtonClicked
     | EqualSignButtonClicked
+    | ModuloButtonPressed
+    | DeleteButtonPressed
     | KeyPressed String
 
 
@@ -81,6 +83,17 @@ update msg model =
 
         DivideButtonClicked ->
             ( handleOperator model "/", Cmd.none )
+
+        ModuloButtonPressed ->
+            ( handleOperator model "%", Cmd.none )
+
+        DeleteButtonPressed ->
+            case model.output of
+                Ok currentOutput ->
+                    ( { model | output = Ok (currentOutput // 10) }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
 
         EqualSignButtonClicked ->
             case model.output of
@@ -138,11 +151,17 @@ update msg model =
                 "/" ->
                     update DivideButtonClicked model
 
+                "%" ->
+                    update ModuloButtonPressed model
+
                 "Enter" ->
                     update EqualSignButtonClicked model
 
                 "c" ->
                     update ClearButtonClicked model
+
+                "Backspace" ->
+                    update DeleteButtonPressed model
 
                 _ ->
                     ( model, Cmd.none )
@@ -177,6 +196,9 @@ calculate firstNumber operator secondNumber =
             else
                 checkOverflow (firstNumber // secondNumber)
 
+        "%" ->
+            checkOverflow (modBy secondNumber firstNumber)
+
         _ ->
             Err "Invalid Operation"
 
@@ -209,22 +231,25 @@ view model =
     div [ id "calculator", Attr.tabindex 0 ]
         [ p [ class "output" ] [ text (displayOutput model) ]
         , div [ class "actions" ]
-            [ button [ onClick (NumberButtonClicked 7) ] [ text "7" ]
+            [ button [ onClick ClearButtonClicked ] [ text "c" ]
+            , button [ onClick ModuloButtonPressed ] [ text "%" ]
+            , button [ onClick DeleteButtonPressed ] [ text "del" ]
+            , button [ class "actionButton", onClick PlusButtonClicked ] [ text "+" ]
+            , button [ onClick (NumberButtonClicked 7) ] [ text "7" ]
             , button [ onClick (NumberButtonClicked 8) ] [ text "8" ]
             , button [ onClick (NumberButtonClicked 9) ] [ text "9" ]
-            , button [ class "actionButton", onClick PlusButtonClicked ] [ text "+" ]
+            , button [ class "actionButton", onClick MinusButtonClicked ] [ text "-" ]
             , button [ onClick (NumberButtonClicked 4) ] [ text "4" ]
             , button [ onClick (NumberButtonClicked 5) ] [ text "5" ]
             , button [ onClick (NumberButtonClicked 6) ] [ text "6" ]
-            , button [ class "actionButton", onClick MinusButtonClicked ] [ text "-" ]
+            , button [ class "actionButton", onClick MultiplyButtonClicked ] [ text "*" ]
             , button [ onClick (NumberButtonClicked 1) ] [ text "1" ]
             , button [ onClick (NumberButtonClicked 2) ] [ text "2" ]
             , button [ onClick (NumberButtonClicked 3) ] [ text "3" ]
-            , button [ class "actionButton", onClick MultiplyButtonClicked ] [ text "*" ]
-            , button [ onClick ClearButtonClicked ] [ text "c" ]
-            , button [ onClick (NumberButtonClicked 0) ] [ text "0" ]
-            , button [ class "actionButton", onClick EqualSignButtonClicked ] [ text "=" ]
             , button [ class "actionButton", onClick DivideButtonClicked ] [ text "/" ]
+            , button [ class "button0", onClick (NumberButtonClicked 0) ] [ text "0" ]
+            , button [] [ text "," ]
+            , button [ class "actionButton", onClick EqualSignButtonClicked ] [ text "=" ]
             ]
         ]
 
