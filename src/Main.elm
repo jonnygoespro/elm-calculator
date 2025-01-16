@@ -73,7 +73,7 @@ update msg model =
                 firstNumber =
                     String.toFloat model.currentNumberString |> Maybe.withDefault 0
             in
-            ( { model | firstNumber = firstNumber, operator = operator, currentNumberString = "", output = Ok (String.fromFloat firstNumber ++ " " ++ operator) }, Cmd.none )
+            ( { model | firstNumber = firstNumber, operator = operator, currentNumberString = "0", output = Ok (String.fromFloat firstNumber ++ " " ++ operator) }, Cmd.none )
 
         DeleteButtonPressed ->
             case model.output of
@@ -191,22 +191,31 @@ appendDigitToNumber currentNumber digit =
 
 calculate : Float -> String -> Float -> Result String Float
 calculate firstNumber operator secondNumber =
+    let
+        -- used to avoid floating point errors by allowing up to 10 digits after the comma
+        roundTo n value =
+            let
+                factor =
+                    10 ^ n
+            in
+            toFloat (round (value * factor)) / factor
+    in
     case operator of
         "+" ->
-            Ok (firstNumber + secondNumber)
+            Ok (roundTo 10 (firstNumber + secondNumber))
 
         "-" ->
-            Ok (firstNumber - secondNumber)
+            Ok (roundTo 10 (firstNumber - secondNumber))
 
         "*" ->
-            Ok (firstNumber * secondNumber)
+            Ok (roundTo 10 (firstNumber * secondNumber))
 
         "/" ->
             if secondNumber == 0 then
                 Err "Cannot divide by zero"
 
             else
-                Ok (firstNumber / secondNumber)
+                Ok (roundTo 10 (firstNumber / secondNumber))
 
         "%" ->
             Ok (toFloat (modBy (round secondNumber) (round firstNumber)))
