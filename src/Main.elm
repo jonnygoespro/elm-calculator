@@ -27,6 +27,7 @@ type alias Model =
     , operator : String
     , firstNumber : Float
     , secondNumber : Float
+    , currentNumberString : String
     }
 
 
@@ -36,6 +37,7 @@ init =
     , operator = ""
     , firstNumber = 0
     , secondNumber = 0
+    , currentNumberString = "0"
     }
 
 
@@ -44,7 +46,7 @@ init =
 
 
 type Msg
-    = NumberButtonClicked Float
+    = NumberButtonClicked Int
     | ClearButtonClicked
     | OperatorButtonClicked String
     | EqualSignButtonClicked
@@ -56,79 +58,56 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NumberButtonClicked newNumber ->
-            case model.output of
-                Ok currentOutput ->
-                    case model.operator of
-                        "=" ->
-                            let
-                                newFirstNumber =
-                                    appendDigitToNumber model.firstNumber (getLastChar currentOutput) (round newNumber)
-                            in
-                            case newFirstNumber of
-                                Just number ->
-                                    ( { model | firstNumber = number, output = Ok (String.fromFloat number) }, Cmd.none )
-
-                                Nothing ->
-                                    ( { model | firstNumber = 0, secondNumber = 0, operator = "", output = Err "Overflow occured" }, Cmd.none )
-
-                        "" ->
-                            let
-                                newFirstNumber =
-                                    appendDigitToNumber model.firstNumber (getLastChar currentOutput) (round newNumber)
-                            in
-                            case newFirstNumber of
-                                Just number ->
-                                    ( { model | firstNumber = number, output = Ok (String.fromFloat number) }, Cmd.none )
-
-                                Nothing ->
-                                    ( { model | firstNumber = 0, secondNumber = 0, operator = "", output = Err "Overflow occured" }, Cmd.none )
-
-                        _ ->
-                            let
-                                newSecondNumber =
-                                    appendDigitToNumber model.secondNumber (getLastChar currentOutput) (round newNumber)
-                            in
-                            case newSecondNumber of
-                                Just number ->
-                                    ( { model | secondNumber = number, output = Ok (displayOutput model.output model.firstNumber model.operator number) }, Cmd.none )
-
-                                Nothing ->
-                                    ( { model | firstNumber = 0, secondNumber = 0, operator = "", output = Err "Overflow occured" }, Cmd.none )
-
-                Err _ ->
-                    ( { model | firstNumber = newNumber, secondNumber = 0, operator = "", output = Ok (String.fromFloat newNumber) }, Cmd.none )
+        NumberButtonClicked digit ->
+            let
+                newNumberString =
+                    appendDigitToNumber model.currentNumberString (String.fromInt digit)
+            in
+            ( { model | currentNumberString = newNumberString, output = Ok newNumberString }, Cmd.none )
 
         ClearButtonClicked ->
-            ( { model | output = Ok "0", firstNumber = 0, secondNumber = 0, operator = "" }, Cmd.none )
+            ( { model | output = Ok "0", firstNumber = 0, secondNumber = 0, operator = "", currentNumberString = "0" }, Cmd.none )
 
         OperatorButtonClicked operator ->
-            ( handleOperator model operator, Cmd.none )
+            let
+                firstNumber =
+                    String.toFloat model.currentNumberString |> Maybe.withDefault 0
+            in
+            ( { model | firstNumber = firstNumber, operator = operator, currentNumberString = "", output = Ok (String.fromFloat firstNumber ++ " " ++ operator) }, Cmd.none )
 
         DeleteButtonPressed ->
-            case model.output of
-                Ok _ ->
-                    ( model, Cmd.none )
+            let
+                newNumberString =
+                    case String.length model.currentNumberString of
+                        0 ->
+                            "0"
 
-                Err _ ->
-                    ( model, Cmd.none )
+                        _ ->
+                            String.slice 0 (String.length model.currentNumberString - 1) model.currentNumberString
+            in
+            ( { model | currentNumberString = newNumberString, output = Ok newNumberString }, Cmd.none )
 
         EqualSignButtonClicked ->
-            case model.output of
-                Ok _ ->
-                    let
-                        result =
-                            calculate model.firstNumber model.operator model.secondNumber
-                    in
-                    case result of
-                        Ok value ->
-                            ( { model | output = Ok (String.fromFloat value), firstNumber = value, secondNumber = 0, operator = "=" }, Cmd.none )
+            let
+                secondNumber =
+                    String.toFloat model.currentNumberString |> Maybe.withDefault 0
 
-                        Err errorMessage ->
-                            ( { model | output = Err errorMessage, firstNumber = 0, secondNumber = 0, operator = "" }, Cmd.none )
+                result =
+                    calculate model.firstNumber model.operator secondNumber
+            in
+            case result of
+                Ok value ->
+                    ( { model | output = Ok (String.fromFloat value), firstNumber = value, secondNumber = 0, operator = "=", currentNumberString = String.fromFloat value }, Cmd.none )
 
-                Err _ ->
-                    ( model, Cmd.none )
+                Err errorMessage ->
+                    ( { model | output = Err errorMessage, firstNumber = 0, secondNumber = 0, operator = "", currentNumberString = "0" }, Cmd.none )
+
+        CommaButtonPressed ->
+            if String.contains "." model.currentNumberString then
+                ( model, Cmd.none )
+
+            else
+                ( { model | currentNumberString = model.currentNumberString ++ ".", output = Ok (model.currentNumberString ++ ".") }, Cmd.none )
 
         KeyPressed key ->
             case key of
@@ -174,9 +153,6 @@ update msg model =
                 "/" ->
                     update (OperatorButtonClicked "/") model
 
-                "%" ->
-                    update (OperatorButtonClicked "%") model
-
                 "." ->
                     update CommaButtonPressed model
 
@@ -195,112 +171,37 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
-        CommaButtonPressed ->
-            case model.operator of
-                "" ->
-                    if isWholeNumber model.firstNumber then
-                        ( { model | output = Ok (displayOutput model.output model.firstNumber model.operator model.secondNumber ++ ".") }, Cmd.none )
 
-                    else
-                        ( model, Cmd.none )
+appendDigitToNumber : String -> String -> String
+appendDigitToNumber currentNumber digit =
+    if currentNumber == "0" && digit /= "." then
+        digit
 
-                "=" ->
-                    if isWholeNumber model.firstNumber then
-                        ( { model | output = Ok (displayOutput model.output model.firstNumber model.operator model.secondNumber ++ ".") }, Cmd.none )
-
-                    else
-                        ( model, Cmd.none )
-
-                _ ->
-                    if isWholeNumber model.secondNumber then
-                        ( { model | output = Ok (displayOutput model.output model.firstNumber model.operator model.secondNumber ++ ".") }, Cmd.none )
-
-                    else
-                        ( model, Cmd.none )
-
-
-handleOperator : Model -> String -> Model
-handleOperator model operator =
-    case model.output of
-        Ok _ ->
-            { model | operator = operator, output = Ok (displayOutput model.output model.firstNumber operator model.secondNumber) }
-
-        Err _ ->
-            model
+    else
+        currentNumber ++ digit
 
 
 calculate : Float -> String -> Float -> Result String Float
 calculate firstNumber operator secondNumber =
     case operator of
         "+" ->
-            checkOverflow (firstNumber + secondNumber)
+            Ok (firstNumber + secondNumber)
 
         "-" ->
-            checkOverflow (firstNumber - secondNumber)
+            Ok (firstNumber - secondNumber)
 
         "*" ->
-            checkOverflow (firstNumber * secondNumber)
+            Ok (firstNumber * secondNumber)
 
         "/" ->
             if secondNumber == 0 then
                 Err "Cannot divide by zero"
 
             else
-                checkOverflow (firstNumber / secondNumber)
-
-        "%" ->
-            checkOverflow (toFloat (modBy (round secondNumber) (round firstNumber)))
+                Ok (firstNumber / secondNumber)
 
         _ ->
             Err "Invalid operation"
-
-
-checkOverflow : Float -> Result String Float
-checkOverflow number =
-    if number < -2147483648 || number > 2147483647 then
-        Err "Overflow occured"
-
-    else
-        Ok number
-
-
-isWholeNumber : Float -> Bool
-isWholeNumber number =
-    number == toFloat (round number)
-
-
-getLastChar : String -> Maybe Char
-getLastChar str =
-    case String.reverse str |> String.uncons of
-        Just ( lastChar, _ ) ->
-            Just lastChar
-
-        Nothing ->
-            Nothing
-
-
-appendDigitToNumber : Float -> Maybe Char -> Int -> Maybe Float
-appendDigitToNumber number comma digit =
-    let
-        numberAsString =
-            String.fromFloat number
-
-        digitAsString =
-            String.fromInt digit
-
-        newNumberAsString =
-            case comma of
-                Just lastDigit ->
-                    if lastDigit == '.' then
-                        numberAsString ++ String.fromChar lastDigit ++ digitAsString
-
-                    else
-                        numberAsString ++ digitAsString
-
-                Nothing ->
-                    numberAsString ++ digitAsString
-    in
-    String.toFloat newNumberAsString
 
 
 
@@ -309,17 +210,8 @@ appendDigitToNumber number comma digit =
 
 view : Model -> Html Msg
 view model =
-    let
-        outputText =
-            case model.output of
-                Ok output ->
-                    output
-
-                Err errorMessage ->
-                    errorMessage
-    in
     div [ id "calculator", Attr.tabindex 0 ]
-        [ p [ class "output" ] [ text outputText ]
+        [ p [ class "output" ] [ text (displayOutput model) ]
         , div [ class "actions" ]
             [ button [ onClick ClearButtonClicked ] [ text "c" ]
             , button [ onClick (OperatorButtonClicked "%") ] [ text "%" ]
@@ -344,19 +236,23 @@ view model =
         ]
 
 
-displayOutput : Result String String -> Float -> String -> Float -> String
-displayOutput output firstNumber operator secondNumber =
-    case output of
-        Ok _ ->
-            case operator of
+displayOutput : Model -> String
+displayOutput model =
+    let
+        _ =
+            Debug.log "model" model
+    in
+    case model.output of
+        Ok output ->
+            case model.operator of
                 "" ->
-                    String.fromFloat firstNumber
+                    model.currentNumberString
 
                 "=" ->
-                    String.fromFloat firstNumber
+                    model.currentNumberString
 
                 _ ->
-                    String.fromFloat firstNumber ++ " " ++ operator ++ " " ++ String.fromFloat secondNumber
+                    String.fromFloat model.firstNumber ++ " " ++ model.operator ++ " " ++ model.currentNumberString
 
         Err errorMessage ->
             errorMessage
