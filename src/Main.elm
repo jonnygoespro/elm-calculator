@@ -76,16 +76,21 @@ update msg model =
             ( { model | firstNumber = firstNumber, operator = operator, currentNumberString = "", output = Ok (String.fromFloat firstNumber ++ " " ++ operator) }, Cmd.none )
 
         DeleteButtonPressed ->
-            let
-                newNumberString =
-                    case String.length model.currentNumberString of
-                        0 ->
-                            "0"
+            case model.output of
+                Err _ ->
+                    ( model, Cmd.none )
 
-                        _ ->
-                            String.slice 0 (String.length model.currentNumberString - 1) model.currentNumberString
-            in
-            ( { model | currentNumberString = newNumberString, output = Ok newNumberString }, Cmd.none )
+                Ok currentOutput ->
+                    let
+                        newNumberString =
+                            case String.length currentOutput of
+                                1 ->
+                                    "0"
+
+                                _ ->
+                                    String.slice 0 (String.length model.currentNumberString - 1) model.currentNumberString
+                    in
+                    ( { model | currentNumberString = newNumberString, output = Ok newNumberString }, Cmd.none )
 
         EqualSignButtonClicked ->
             let
@@ -243,7 +248,7 @@ displayOutput model =
             Debug.log "model" model
     in
     case model.output of
-        Ok output ->
+        Ok _ ->
             case model.operator of
                 "" ->
                     model.currentNumberString
