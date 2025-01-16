@@ -1,3 +1,4 @@
 elm-stuff/
 .idea/
-target/elm.js
+target/
+.DS_Store
