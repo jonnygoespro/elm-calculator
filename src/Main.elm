@@ -158,6 +158,9 @@ update msg model =
                 "/" ->
                     update (OperatorButtonClicked "/") model
 
+                "%" ->
+                    update (OperatorButtonClicked "%") model
+
                 "." ->
                     update CommaButtonPressed model
 
@@ -204,6 +207,9 @@ calculate firstNumber operator secondNumber =
 
             else
                 Ok (firstNumber / secondNumber)
+
+        "%" ->
+            Ok (toFloat (modBy (round secondNumber) (round firstNumber)))
 
         _ ->
             Err "Invalid operation"
