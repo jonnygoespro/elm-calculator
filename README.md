@@ -1,38 +1,41 @@
-# Integer Calculator in Elm
+# Elm Calculator
 
 ## Description
 
-This project is an **integer calculator** built using **Elm**. It allows users to perform basic arithmetic operations such as addition, subtraction, multiplication, and division. The calculator supports input via buttons and keyboard (numbers and Enter key). Overflow checks are also included to ensure calculations stay within valid integer ranges.
-
-This project was developed as part of the **Applied Programming Paradigms** course during the **1st semester of the Master's degree program** at **FH Salzburg**.
+This project is a **calculator** built with **Elm** that supports basic arithmetic operations (addition, subtraction, multiplication, division) and the modulo operation. It also handles numbers with up to **10 decimal places** and prevents overflow errors.
 
 ## Build and Run Instructions
 
 ### Requirements
-- **Elm**: Make sure you have Elm installed. You can check the official Elm installation guide: https://elm-lang.org/docs/install
-- **Shell/Terminal**: For running the build command.
+- **Elm**: [Installation Guide](https://elm-lang.org/docs/install)
+- **Node.js** and **npm** (only for minification): Install `uglify-js` globally if you want to minify the build:
+  ```bash
+  npm install -g uglify-js
+  ```
+- **Shell/Terminal**: To run the build command.
 
 ### Build Command
-To build the project, run the following command in your terminal:
+
+To build the project, run:
 
 ```bash
 ./build.sh
 ```
 
-This will generate the necessary output files to run the Elm project.
+This will compile the Elm code to `./target/elm.js`. To build a minified version, use the `--minify` flag:
+
+```bash
+./build.sh --minify
+```
+
+This will generate `elm.min.js` and adjust the HTML accordingly.
 
 ### Running the Application
-Once the project is built, you can run it by opening the generated HTML file in your browser. To serve the project using a local server, you can use the `elm reactor` command:
+
+To run the application, serve it using `elm reactor`:
 
 ```bash
 elm reactor
 ```
 
-After running the above command, open your browser and navigate to the provided URL (typically `http://localhost:8000`) to interact with the calculator.
-
-## How to Use
-- Use the on-screen number buttons (`0-9`) to enter numbers.
-- Use the arithmetic operation buttons (`+`, `-`, `*`, `/`) to perform operations.
-- Press the **Enter** key or the **equals (`=`)** button to calculate the result.
-- Press the **Clear (`c`)** button to reset the calculator.
-
+Open your browser and navigate to `http://localhost:8000/target/index.html` to interact with the calculator.
