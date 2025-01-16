@@ -60,10 +60,26 @@ update msg model =
     case msg of
         NumberButtonClicked digit ->
             let
-                newNumberString =
-                    appendDigitToNumber model.currentNumberString (String.fromInt digit)
+                currentNumberString =
+                    model.currentNumberString
+
+                isDecimalTooLong =
+                    case String.split "." currentNumberString of
+                        [ _, fractionalPart ] ->
+                            String.length fractionalPart >= 10
+
+                        _ ->
+                            False
             in
-            ( { model | currentNumberString = newNumberString, output = Ok newNumberString }, Cmd.none )
+            if isDecimalTooLong then
+                ( model, Cmd.none )
+
+            else
+                let
+                    newNumberString =
+                        appendDigitToNumber currentNumberString (String.fromInt digit)
+                in
+                ( { model | currentNumberString = newNumberString, output = Ok newNumberString }, Cmd.none )
 
         ClearButtonClicked ->
             ( { model | output = Ok "0", firstNumber = 0, secondNumber = 0, operator = "", currentNumberString = "0" }, Cmd.none )
@@ -258,10 +274,6 @@ view model =
 
 displayOutput : Model -> String
 displayOutput model =
-    let
-        _ =
-            Debug.log "model" model
-    in
     case model.output of
         Ok _ ->
             case model.operator of
